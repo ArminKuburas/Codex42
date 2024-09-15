@@ -52,7 +52,6 @@ def calculate_days(current_xp, project_xp_gain):
     return (days_after - days_before) * 483
 
 def display_art():
-    """Display terminal art for the tool."""
     print("\n")
 print(r"""
  ____  _               _____ _  ___    _  ____  _      ______   _____      __     _______ 

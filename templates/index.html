@@ -1,0 +1,1004 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Codex 42 XP Calculator</title>
+    <style>
+        body {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #1e1e1e;
+            color: #f0f0f0;
+            margin: 0;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+        }
+        .container {
+            width: 90%;
+            max-width: 1200px;
+            margin: 20px auto;
+        }
+        .ascii-art {
+            white-space: pre;
+            font-family: monospace;
+            font-size: 10px;
+            color: #5caeef;
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        .card {
+            background-color: #2d2d2d;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        h1, h2, h3 {
+            color: #5caeef;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input, select, textarea {
+            width: 100%;
+            padding: 10px;
+            border-radius: 4px;
+            border: 1px solid #444;
+            background-color: #333;
+            color: #f0f0f0;
+            margin-bottom: 10px;
+        }
+        button {
+            background-color: #5caeef;
+            color: #1e1e1e;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: background-color 0.3s;
+        }
+        button:hover {
+            background-color: #3d8cd1;
+        }
+        .result {
+            font-weight: bold;
+            color: #5caeef;
+            margin-top: 10px;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
+        .tabs {
+            display: flex;
+            margin-bottom: 20px;
+        }
+        .tab {
+            padding: 10px 20px;
+            background-color: #2d2d2d;
+            border-radius: 4px 4px 0 0;
+            margin-right: 5px;
+            cursor: pointer;
+        }
+        .tab.active {
+            background-color: #5caeef;
+            color: #1e1e1e;
+        }
+        .project-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        .project-item {
+            background-color: #333;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+        }
+        .simulation-info {
+            margin-bottom: 20px;
+        }
+        .simulation-info p {
+            margin: 5px 0;
+        }
+        .project-simulation-item {
+            background-color: #333;
+            padding: 10px;
+            margin-bottom: 10px;
+            border-radius: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .project-simulation-item .remove-btn {
+            background-color: #d45050;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            padding: 5px 10px;
+            cursor: pointer;
+        }
+        .goal-reached {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px;
+            border-radius: 4px;
+            margin-top: 10px;
+            font-weight: bold;
+        }
+        .sort-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-bottom: 10px;
+        }
+        .sort-buttons button {
+            padding: 5px 10px;
+            background-color: #444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.9em;
+        }
+        .sort-buttons button:hover {
+            background-color: #5caeef;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="ascii-art">{{ ascii_art | safe }}</div>
+        
+        <div class="tabs">
+            <div class="tab active" onclick="openTab('calculator')">Calculator</div>
+            <div class="tab" onclick="openTab('account')">Account</div>
+            <div class="tab" onclick="openTab('projects')">Projects</div>
+        </div>
+        
+        <div id="calculator" class="tab-content active">
+            <div class="card">
+                <h2>XP Calculator</h2>
+                <div class="form-group">
+                    <label for="calc-level">Starting Level:</label>
+                    <input type="number" id="calc-level" step="0.01" placeholder="e.g., 4.62">
+                </div>
+                <div class="form-group">
+                    <label for="calc-xp">Project XP Gain:</label>
+                    <input type="number" id="calc-xp" step="1" placeholder="e.g., 5000">
+                </div>
+                <div class="form-group">
+                    <label for="target-level">Target Level (optional):</label>
+                    <input type="number" id="target-level" step="0.01" placeholder="e.g., 25">
+                </div>
+                <div class="form-group">
+                    <button onclick="calculateXP()" style="margin-right: 10px;">Calculate</button>
+                    <button onclick="addToSimulation()">Add to Simulation</button>
+                    <button onclick="resetSimulation()" style="background-color: #d45050;">Reset Simulation</button>
+                </div>
+                <div id="calculation-result" class="result"></div>
+            </div>
+            
+            <div class="card">
+                <h2>Path to Level 25 Simulator</h2>
+                <div class="simulation-info">
+                    <p>Starting Level: <span id="sim-starting-level">-</span></p>
+                    <p>Current Simulated Level: <span id="sim-current-level">-</span></p>
+                    <p>XP Progress: <span id="sim-xp-progress">-</span></p>
+                    <p>XP Needed to Target: <span id="sim-xp-needed">-</span></p>
+                    <div class="progress-bar-container" style="background-color: #333; border-radius: 5px; height: 20px; width: 100%;">
+                        <div id="sim-progress-bar" style="background-color: #5caeef; height: 100%; width: 0; border-radius: 5px;"></div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Sort Simulation Projects By:</label>
+                    <div class="sort-buttons">
+                        <button onclick="sortSimulationProjects('name')">Name</button>
+                        <button onclick="sortSimulationProjects('xp')">XP (Ascending)</button>
+                        <button onclick="sortSimulationProjects('xp', true)">XP (Descending)</button>
+                    </div>
+                </div>
+                <div class="project-list" id="simulation-list">
+                    <p>Add projects to your simulation to see your path to level 25</p>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h3>Saved Projects</h3>
+                <div class="form-group">
+                    <label for="saved-project">Select a saved project:</label>
+                    <select id="saved-project" onchange="selectProject()">
+                        <option value="">Select a project</option>
+                    </select>
+                </div>
+                <div id="saved-project-info"></div>
+            </div>
+
+            <div class="card">
+                <h3>Saved Simulations</h3>
+                <div class="form-group">
+                    <label for="simulation-name">Simulation Name:</label>
+                    <input type="text" id="simulation-name" placeholder="e.g., Path to Level 25">
+                </div>
+                <div class="form-group">
+                    <button onclick="saveSimulation()" style="background-color: #4CAF50;">Save Current Simulation</button>
+                </div>
+                <div class="form-group">
+                    <label for="saved-simulation">Load Saved Simulation:</label>
+                    <select id="saved-simulation" onchange="loadSimulation()">
+                        <option value="">Select a simulation</option>
+                    </select>
+                </div>
+                <div id="simulation-load-result" class="result"></div>
+            </div>
+        </div>
+        
+        <div id="account" class="tab-content">
+            <div class="card">
+                <h2>User Account</h2>
+                <div class="form-group">
+                    <label for="username">Username:</label>
+                    <input type="text" id="username" placeholder="Enter username">
+                </div>
+                <div class="form-group">
+                    <label for="user-level">Current Level:</label>
+                    <input type="number" id="user-level" step="0.01" placeholder="e.g., 4.62">
+                </div>
+                <button onclick="createUser()">Create Account</button>
+                <div class="form-group" style="margin-top: 20px;">
+                    <label for="load-user">Load Existing Account:</label>
+                    <select id="load-user">
+                        <option value="">Select a user</option>
+                        {% for user in users %}
+                        <option value="{{ user }}">{{ user }}</option>
+                        {% endfor %}
+                    </select>
+                    <button onclick="loadUser()">Load</button>
+                </div>
+                <div id="user-info" class="result"></div>
+            </div>
+        </div>
+        
+        <div id="projects" class="tab-content">
+            <div class="card">
+                <h2>Save Project</h2>
+                <div class="form-group">
+                    <label for="project-name">Project Name:</label>
+                    <input type="text" id="project-name" placeholder="e.g., 42sh">
+                </div>
+                <div class="form-group">
+                    <label for="project-xp">Project XP:</label>
+                    <input type="number" id="project-xp" step="1" placeholder="e.g., 5000">
+                </div>
+                <div class="form-group">
+                    <label for="project-desc">Description:</label>
+                    <textarea id="project-desc" rows="3" placeholder="Optional project description"></textarea>
+                </div>
+                <button onclick="saveProject()">Save Project</button>
+                <div id="project-save-result" class="result"></div>
+            </div>
+            
+            <div class="card">
+                <h3>My Projects</h3>
+                <div class="form-group">
+                    <label>Sort Projects By:</label>
+                    <div class="sort-buttons">
+                        <button onclick="sortProjects('name')">Name</button>
+                        <button onclick="sortProjects('date')">Date Added</button>
+                        <button onclick="sortProjects('xp')">XP Amount</button>
+                        <button onclick="sortProjects('xp', true)">XP (Descending)</button>
+                    </div>
+                </div>
+                <div id="project-list" class="project-list">
+                    <p>Please load a user account to view projects</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentUser = null;
+        let simulationData = {
+            startingLevel: null,
+            startingXP: null,
+            currentXP: null,
+            projects: [],
+            targetLevel: 25
+        };
+        
+        // Tab switching
+        function openTab(tabName) {
+            // Hide all tab contents
+            const tabContents = document.querySelectorAll('.tab-content');
+            tabContents.forEach(tab => tab.classList.remove('active'));
+            
+            // Deactivate all tabs
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Activate the selected tab
+            document.getElementById(tabName).classList.add('active');
+            document.querySelector(`.tab[onclick="openTab('${tabName}')"]`).classList.add('active');
+        }
+        
+        // Calculate XP
+        function calculateXP() {
+            const currentLevel = parseFloat(document.getElementById('calc-level').value);
+            const projectXP = parseFloat(document.getElementById('calc-xp').value);
+            
+            if (isNaN(currentLevel) || isNaN(projectXP)) {
+                document.getElementById('calculation-result').innerHTML = 'Please enter valid numbers';
+                return;
+            }
+            
+            fetch('/calculate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    current_level: currentLevel,
+                    project_xp: projectXP
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('calculation-result').innerHTML = `
+                        Current XP: ${Math.round(data.current_xp)}<br>
+                        New XP: ${Math.round(data.new_xp)}<br>
+                        New Level: ${data.new_level.toFixed(2)}
+                    `;
+                    
+                    // Update target level if provided
+                    const targetLevel = parseFloat(document.getElementById('target-level').value);
+                    if (!isNaN(targetLevel)) {
+                        simulationData.targetLevel = targetLevel;
+                        updateSimulationDisplay();
+                    }
+                } else {
+                    document.getElementById('calculation-result').innerHTML = `Error: ${data.message}`;
+                }
+            })
+            .catch(error => {
+                document.getElementById('calculation-result').innerHTML = `Error: ${error}`;
+            });
+        }
+        
+        // Create user
+        function createUser() {
+            const username = document.getElementById('username').value;
+            const currentLevel = parseFloat(document.getElementById('user-level').value);
+            
+            if (!username || isNaN(currentLevel)) {
+                document.getElementById('user-info').innerHTML = 'Please enter valid username and level';
+                return;
+            }
+            
+            fetch('/create_user', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: username,
+                    current_level: currentLevel
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('user-info').innerHTML = `User ${username} created successfully!`;
+                    // Add the new user to the dropdown
+                    const option = document.createElement('option');
+                    option.value = username;
+                    option.textContent = username;
+                    document.getElementById('load-user').appendChild(option);
+                    
+                    // Load the user
+                    document.getElementById('load-user').value = username;
+                    loadUser();
+                } else {
+                    document.getElementById('user-info').innerHTML = `Error: ${data.message}`;
+                }
+            })
+            .catch(error => {
+                document.getElementById('user-info').innerHTML = `Error: ${error}`;
+            });
+        }
+        
+        // Load user
+        function loadUser() {
+            const username = document.getElementById('load-user').value;
+            
+            if (!username) {
+                document.getElementById('user-info').innerHTML = 'Please select a user';
+                return;
+            }
+            
+            fetch(`/load_user/${username}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    currentUser = data.user;
+                    document.getElementById('user-info').innerHTML = `
+                        Username: ${currentUser.username}<br>
+                        Current Level: ${currentUser.current_level.toFixed(2)}<br>
+                        Current XP: ${Math.round(currentUser.current_xp)}
+                    `;
+                    
+                    // Update projects
+                    updateProjectList();
+                    updateSavedProjectsDropdown();
+                    
+                    // Pre-fill calculator with user's level
+                    document.getElementById('calc-level').value = currentUser.current_level;
+                    document.getElementById('target-level').value = 25; // Default target level
+                    
+                    // Load saved simulations
+                    loadSimulations();
+                } else {
+                    document.getElementById('user-info').innerHTML = `Error: ${data.message}`;
+                }
+            })
+            .catch(error => {
+                document.getElementById('user-info').innerHTML = `Error: ${error}`;
+            });
+        }
+        
+        // Save project
+        function saveProject() {
+            if (!currentUser) {
+                document.getElementById('project-save-result').innerHTML = 'Please load a user account first';
+                return;
+            }
+            
+            const projectName = document.getElementById('project-name').value;
+            const projectXP = parseFloat(document.getElementById('project-xp').value);
+            const projectDesc = document.getElementById('project-desc').value;
+            
+            if (!projectName || isNaN(projectXP)) {
+                document.getElementById('project-save-result').innerHTML = 'Please enter valid project name and XP';
+                return;
+            }
+            
+            fetch('/save_project', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    username: currentUser.username,
+                    project_name: projectName,
+                    project_xp: projectXP,
+                    project_description: projectDesc
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('project-save-result').innerHTML = 'Project saved successfully!';
+                    // Reload user data to get updated projects
+                    loadUser();
+                } else {
+                    document.getElementById('project-save-result').innerHTML = `Error: ${data.message}`;
+                }
+            })
+            .catch(error => {
+                document.getElementById('project-save-result').innerHTML = `Error: ${error}`;
+            });
+        }
+        
+        // Update project list
+        function updateProjectList(sortBy = 'name', descending = false) {
+            const projectList = document.getElementById('project-list');
+            
+            if (!currentUser || !currentUser.projects) {
+                projectList.innerHTML = '<p>No projects found</p>';
+                return;
+            }
+            
+            if (Object.keys(currentUser.projects).length === 0) {
+                projectList.innerHTML = '<p>No projects saved yet</p>';
+                return;
+            }
+            
+            // Convert projects to array for sorting
+            const projectsArray = Object.entries(currentUser.projects).map(([name, project]) => ({
+                name,
+                ...project
+            }));
+            
+            // Sort projects
+            projectsArray.sort((a, b) => {
+                let comparison;
+                switch (sortBy) {
+                    case 'name':
+                        comparison = a.name.localeCompare(b.name);
+                        break;
+                    case 'date':
+                        comparison = new Date(a.date_added) - new Date(b.date_added);
+                        break;
+                    case 'xp':
+                        comparison = parseFloat(a.xp) - parseFloat(b.xp);
+                        break;
+                    default:
+                        comparison = 0;
+                }
+                return descending ? -comparison : comparison;
+            });
+            
+            let html = '';
+            projectsArray.forEach(project => {
+                html += `
+                <div class="project-item">
+                    <strong>${project.name}</strong> - ${project.xp} XP<br>
+                    ${project.description ? `<small>${project.description}</small><br>` : ''}
+                    <small>Added: ${project.date_added}</small>
+                </div>
+                `;
+            });
+            
+            projectList.innerHTML = html;
+        }
+        
+        // Sort projects
+        function sortProjects(sortBy, descending = false) {
+            updateProjectList(sortBy, descending);
+        }
+        
+        // Update saved projects dropdown
+        function updateSavedProjectsDropdown() {
+            const dropdown = document.getElementById('saved-project');
+            
+            // Clear existing options except the first one
+            while (dropdown.options.length > 1) {
+                dropdown.remove(1);
+            }
+            
+            if (!currentUser || !currentUser.projects) {
+                return;
+            }
+            
+            for (const [name, project] of Object.entries(currentUser.projects)) {
+                const option = document.createElement('option');
+                option.value = name;
+                option.textContent = `${name} (${project.xp} XP)`;
+                dropdown.appendChild(option);
+            }
+        }
+        
+        // Select saved project
+        function selectProject() {
+            const projectName = document.getElementById('saved-project').value;
+            const infoDiv = document.getElementById('saved-project-info');
+            
+            if (!projectName || !currentUser || !currentUser.projects[projectName]) {
+                infoDiv.innerHTML = '';
+                document.getElementById('calc-xp').value = '';
+                return;
+            }
+            
+            const project = currentUser.projects[projectName];
+            
+            // Set the XP in the calculator
+            document.getElementById('calc-xp').value = project.xp;
+            
+            // Show project info
+            infoDiv.innerHTML = `
+                <div class="result">
+                    <strong>${projectName}</strong><br>
+                    XP: ${project.xp}<br>
+                    ${project.description ? `Description: ${project.description}<br>` : ''}
+                </div>
+            `;
+            
+            // Calculate automatically
+            calculateXP();
+        }
+        
+        // Simulation functions
+        function addToSimulation() {
+            const currentLevel = parseFloat(document.getElementById('calc-level').value);
+            const projectXP = parseFloat(document.getElementById('calc-xp').value);
+            const projectName = document.getElementById('saved-project').value || 'Custom Project';
+            
+            if (isNaN(currentLevel) || isNaN(projectXP)) {
+                document.getElementById('calculation-result').innerHTML = 'Please enter valid numbers';
+                return;
+            }
+            
+            // Initialize simulation if it's the first project
+            if (simulationData.projects.length === 0) {
+                simulationData.startingLevel = currentLevel;
+                
+                // Get the XP for the starting level
+                fetch('/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        current_level: currentLevel,
+                        project_xp: 0
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        simulationData.startingXP = data.current_xp;
+                        simulationData.currentXP = data.current_xp;
+                        
+                        // Now add the project
+                        addProjectToSimulation(projectName, projectXP);
+                    }
+                });
+            } else {
+                addProjectToSimulation(projectName, projectXP);
+            }
+        }
+        
+        function addProjectToSimulation(projectName, projectXP) {
+            // Add project to the simulation
+            simulationData.projects.push({
+                name: projectName,
+                xp: projectXP,
+                id: Date.now() // Use timestamp as a simple unique ID
+            });
+            
+            // Calculate new XP
+            simulationData.currentXP += projectXP;
+            
+            // Update the display
+            updateSimulationDisplay();
+        }
+        
+        function removeFromSimulation(projectId) {
+            // Find the project
+            const projectIndex = simulationData.projects.findIndex(p => p.id === projectId);
+            
+            if (projectIndex !== -1) {
+                // Subtract its XP
+                simulationData.currentXP -= simulationData.projects[projectIndex].xp;
+                
+                // Remove the project
+                simulationData.projects.splice(projectIndex, 1);
+                
+                // If no projects left, reset simulation
+                if (simulationData.projects.length === 0) {
+                    resetSimulation();
+                    return;
+                }
+                
+                // Update the display
+                updateSimulationDisplay();
+            }
+        }
+        
+        function resetSimulation() {
+            simulationData = {
+                startingLevel: null,
+                startingXP: null,
+                currentXP: null,
+                projects: [],
+                targetLevel: simulationData.targetLevel || 25
+            };
+            
+            document.getElementById('sim-starting-level').textContent = '-';
+            document.getElementById('sim-current-level').textContent = '-';
+            document.getElementById('sim-xp-progress').textContent = '-';
+            document.getElementById('sim-xp-needed').textContent = '-';
+            document.getElementById('sim-progress-bar').style.width = '0%';
+            document.getElementById('simulation-list').innerHTML = '<p>Add projects to your simulation to see your path to level 25</p>';
+        }
+        
+        function updateSimulationDisplay() {
+            if (simulationData.projects.length === 0) {
+                return;
+            }
+            
+            // Get the new level based on current XP
+            fetch('/calculate', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    current_level: 0, // Doesn't matter, we'll use the XP value
+                    project_xp: simulationData.currentXP
+                }),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const currentLevel = data.new_level;
+                    
+                    // Get target level XP (returns a promise)
+                    getTargetLevelXP(simulationData.targetLevel).then(targetXP => {
+                        const xpNeeded = targetXP - simulationData.currentXP;
+                        const progressPercentage = Math.min((simulationData.currentXP / targetXP) * 100, 100);
+                        
+                        // Update the display
+                        document.getElementById('sim-starting-level').textContent = simulationData.startingLevel.toFixed(2);
+                        document.getElementById('sim-current-level').textContent = currentLevel.toFixed(2);
+                        document.getElementById('sim-xp-progress').textContent = 
+                            `${Math.round(simulationData.currentXP)} / ${Math.round(targetXP)} XP`;
+                        document.getElementById('sim-xp-needed').textContent = 
+                            xpNeeded > 0 ? `${Math.round(xpNeeded)} XP needed` : 'Target reached!';
+                        document.getElementById('sim-progress-bar').style.width = `${progressPercentage}%`;
+                        
+                        // Update project list
+                        updateSimulationProjectList();
+                        
+                        // Check if target reached
+                        if (currentLevel >= simulationData.targetLevel) {
+                            const goalReachedElement = document.createElement('div');
+                            goalReachedElement.className = 'goal-reached';
+                            goalReachedElement.textContent = `🎉 Congratulations! You've reached level ${simulationData.targetLevel}!`;
+                            
+                            // Remove previous goal message if exists
+                            const existingGoalMessage = document.querySelector('.goal-reached');
+                            if (existingGoalMessage) {
+                                existingGoalMessage.remove();
+                            }
+                            
+                            document.getElementById('simulation-list').prepend(goalReachedElement);
+                        }
+                    });
+                }
+            });
+        }
+        
+        function updateSimulationProjectList(sortBy = null, descending = false) {
+            const listElement = document.getElementById('simulation-list');
+            
+            if (simulationData.projects.length === 0) {
+                listElement.innerHTML = '<p>Add projects to your simulation to see your path to level 25</p>';
+                return;
+            }
+            
+            let projectsToDisplay = [...simulationData.projects]; // Create a copy
+            
+            // Sort if requested
+            if (sortBy) {
+                projectsToDisplay.sort((a, b) => {
+                    let comparison;
+                    switch (sortBy) {
+                        case 'name':
+                            comparison = a.name.localeCompare(b.name);
+                            break;
+                        case 'xp':
+                            comparison = parseFloat(a.xp) - parseFloat(b.xp);
+                            break;
+                        default:
+                            comparison = 0;
+                    }
+                    return descending ? -comparison : comparison;
+                });
+            }
+            
+            let html = '';
+            let totalXP = 0;
+            
+            projectsToDisplay.forEach(project => {
+                totalXP += project.xp;
+                html += `
+                <div class="project-simulation-item">
+                    <div>
+                        <strong>${project.name}</strong> - ${Math.round(project.xp)} XP
+                        <br><small>Running total: ${Math.round(simulationData.startingXP + totalXP)} XP</small>
+                    </div>
+                    <button class="remove-btn" onclick="removeFromSimulation(${project.id})">Remove</button>
+                </div>
+                `;
+            });
+            
+            // Check for goal reached message
+            const existingGoalMessage = document.querySelector('.goal-reached');
+            if (existingGoalMessage) {
+                html = existingGoalMessage.outerHTML + html;
+            }
+            
+            listElement.innerHTML = html;
+        }
+        
+        // Sort simulation projects
+        function sortSimulationProjects(sortBy, descending = false) {
+            updateSimulationProjectList(sortBy, descending);
+        }
+        
+        // Save current simulation
+        function saveSimulation() {
+            if (!currentUser) {
+                alert('Please load a user account first');
+                return;
+            }
+            
+            if (simulationData.projects.length === 0) {
+                alert('Please add projects to your simulation first');
+                return;
+            }
+            
+            const simulationName = document.getElementById('simulation-name').value;
+            
+            if (!simulationName) {
+                alert('Please enter a name for your simulation');
+                return;
+            }
+            
+            // Create the simulation data object to save
+            const simToSave = {
+                username: currentUser.username,
+                name: simulationName,
+                simulation_data: {
+                    startingLevel: simulationData.startingLevel,
+                    currentXP: simulationData.currentXP,
+                    projects: simulationData.projects,
+                    targetLevel: simulationData.targetLevel
+                }
+            };
+            
+            fetch('/save_simulation', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify(simToSave),
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    document.getElementById('simulation-load-result').innerHTML = 
+                        `Simulation "${simulationName}" saved successfully!`;
+                    // Update simulations dropdown
+                    loadSimulations();
+                } else {
+                    document.getElementById('simulation-load-result').innerHTML = 
+                        `Error: ${data.message}`;
+                }
+            })
+            .catch(error => {
+                document.getElementById('simulation-load-result').innerHTML = `Error: ${error}`;
+            });
+        }
+        
+        // Load simulations for current user
+        function loadSimulations() {
+            if (!currentUser) {
+                return;
+            }
+            
+            fetch(`/get_simulations/${currentUser.username}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const dropdown = document.getElementById('saved-simulation');
+                    
+                    // Clear existing options except the first one
+                    while (dropdown.options.length > 1) {
+                        dropdown.remove(1);
+                    }
+                    
+                    if (!data.simulations || Object.keys(data.simulations).length === 0) {
+                        return;
+                    }
+                    
+                    for (const [name, simulation] of Object.entries(data.simulations)) {
+                        const option = document.createElement('option');
+                        option.value = name;
+                        option.textContent = name;
+                        dropdown.appendChild(option);
+                    }
+                }
+            });
+        }
+        
+        // Load a saved simulation
+        function loadSimulation() {
+            const simulationName = document.getElementById('saved-simulation').value;
+            
+            if (!simulationName || !currentUser) {
+                return;
+            }
+            
+            fetch(`/get_simulations/${currentUser.username}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.success && data.simulations && data.simulations[simulationName]) {
+                    const savedSim = data.simulations[simulationName];
+                    
+                    // Reset and load the simulation
+                    resetSimulation();
+                    
+                    // Set up the simulation data
+                    simulationData.startingLevel = savedSim.starting_level;
+                    simulationData.startingXP = savedSim.current_xp;
+                    simulationData.currentXP = savedSim.current_xp;
+                    simulationData.targetLevel = savedSim.target_level || 25;
+                    
+                    // Set target level in the UI
+                    document.getElementById('target-level').value = simulationData.targetLevel;
+                    
+                    // Load projects one by one to properly recalculate
+                    const projectsToLoad = [...savedSim.projects];
+                    
+                    // Update UI fields
+                    document.getElementById('calc-level').value = simulationData.startingLevel;
+                    
+                    // Load all projects at once without changing the currentXP
+                    // since the saved current_xp already includes all project XP
+                    simulationData.projects = projectsToLoad;
+                    
+                    // Update the UI once all projects are loaded
+                    updateSimulationDisplay();
+                    
+                    document.getElementById('simulation-load-result').innerHTML = 
+                        `Simulation "${simulationName}" loaded successfully!`;
+                } else {
+                    document.getElementById('simulation-load-result').innerHTML = 
+                        'Error loading simulation';
+                }
+            })
+            .catch(error => {
+                document.getElementById('simulation-load-result').innerHTML = `Error: ${error}`;
+            });
+        }
+        
+        function getTargetLevelXP(targetLevel) {
+            // This function gets the XP needed for a specific target level
+            return new Promise((resolve) => {
+                fetch('/calculate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        current_level: targetLevel,
+                        project_xp: 0
+                    }),
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        resolve(data.current_xp);
+                    } else {
+                        // Use hardcoded values for common targets if API fails
+                        const xpEstimates = {
+                            22: 522776,
+                            23: 596388,
+                            24: 679652,
+                            25: 773932
+                        };
+                        
+                        if (xpEstimates[targetLevel]) {
+                            resolve(xpEstimates[targetLevel]);
+                        } else {
+                            // Extrapolate based on growth pattern for unknown levels
+                            const baseLevel = 21;
+                            const baseXP = 457632;
+                            const growthFactor = 1.14; // Approx 14% growth between levels
+                            
+                            const estimatedXP = baseXP * Math.pow(growthFactor, targetLevel - baseLevel);
+                            resolve(estimatedXP);
+                        }
+                    }
+                })
+                .catch(() => {
+                    // Default fallback
+                    resolve(targetLevel * 30000);
+                });
+            });
+        }
+    </script>
+</body>
+</html>

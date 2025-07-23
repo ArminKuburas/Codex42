@@ -1,14 +1,44 @@
 # Codex42
-This is going to be a hub of tools or maybe a wesbite of tools I plan to create to help me in my journey at Hive Helsinki.
+This is going to be a hub of tools or maybe a website of tools I plan to create to help me in my journey at Hive Helsinki.
 
 ## Table of Contents
-- [Blackhole Calculator](#Blackhole-Calculator)
+- [XP Calculator](#XP-Calculator)
 
-## Blackhole-Calculator
-So this is a pretty simple tool all things considered. You give your current level (for example if you are level 4 and 62% of the way to level 5 you mark it down as 4.62) and press enter.
-It then prompts you for the amount of XP you would be earning from the project.
-It returns back the amount of days you would get from completing that project, the level you would reach from completing said project and prompts you if you want to continue or exit the program.
-You do need python to run this script. You run it by using something like python3.
+## XP-Calculator
+The XP Calculator is a web application that helps you track your progress in Hive Helsinki's curriculum. It provides the following features:
+
+- Calculate your new level after completing a project
+- Create and manage user accounts (locally stored)
+- Save project XP values for future reference
+- Track your progress over time
+
+### XP Table
+The calculator includes the official XP values for levels 0-21, and extrapolated values for levels 22-25.
+
+### Installation and Usage
+
+1. Make sure you have Python and Flask installed:
+```bash
+pip install flask flask-sqlalchemy
 ```
-> python3 blackhole_days.py
+
+2. Run the web application:
+```bash
+python blackhole_days.py
 ```
+
+3. Open your browser and navigate to `http://127.0.0.1:5000/`
+
+### Features
+
+#### Calculator Tab
+- Input your current level and project XP gain to see your new level
+- Select from saved projects to quickly calculate gains
+
+#### Account Tab
+- Create a new user account (stored locally)
+- Load existing accounts
+
+#### Projects Tab
+- Save project names and XP values for future reference
+- View all your saved projects
